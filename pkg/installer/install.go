@@ -49,6 +49,20 @@ func (m *manager) Manifests(ctx context.Context) (graph.Graph, error) {
 	return g, err
 }
 
+func (m *manager) Ignition(ctx context.Context) (graph.Graph, error) {
+	g, err := m.Manifests(ctx)
+	if err != nil {
+		return g, err
+	}
+
+	s := []steps.Step{
+		//TODO: Add steps to manipulate ignition configs when needed.
+	}
+
+	err = steps.Run(ctx, m.log, 10*time.Second, s)
+	return g, err
+}
+
 func (m *manager) Install(ctx context.Context) error {
 	s := []steps.Step{
 		steps.AuthorizationRetryingAction(m.fpAuthorizer, m.deployResourceTemplate),
