@@ -60,6 +60,9 @@ func (m *manager) applyInstallConfigCustomisations(installConfig *installconfig.
 		IngressIP: m.oc.Properties.IngressProfiles[0].IP,
 	}
 
+	ingressConfig := &bootkube.AROIngressService{}
+	workerRegistry := &bootkube.AROWorkerRegistries{}
+
 	if m.oc.Properties.NetworkProfile.GatewayPrivateEndpointIP != "" {
 		dnsConfig.GatewayPrivateEndpointIP = m.oc.Properties.NetworkProfile.GatewayPrivateEndpointIP
 		dnsConfig.GatewayDomains = m.getGatewayDomains(m.env, m.oc)
@@ -84,7 +87,7 @@ func (m *manager) applyInstallConfigCustomisations(installConfig *installconfig.
 	}
 
 	g := graph.Graph{}
-	g.Set(installConfig, image, clusterID, bootstrapLoggingConfig, dnsConfig, imageRegistryConfig, &boundSaSigningKey.BoundSASigningKey)
+	g.Set(installConfig, image, clusterID, bootstrapLoggingConfig, dnsConfig, imageRegistryConfig, &boundSaSigningKey.BoundSASigningKey, ingressConfig, workerRegistry)
 
 	m.log.Print("resolving graph")
 	for _, a := range targets.Cluster {

@@ -44,6 +44,7 @@ type manager struct {
 type Interface interface {
 	Install(ctx context.Context) error
 	Manifests(ctx context.Context) (graph.Graph, error)
+	Ignition(ctx context.Context) (graph.Graph, error)
 }
 
 func gatewayDomains(env env.Interface, oc *api.OpenShiftCluster) []string {
