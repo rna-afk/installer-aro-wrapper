@@ -23,6 +23,7 @@ import (
 
 	"github.com/openshift/installer-aro-wrapper/pkg/api"
 	"github.com/openshift/installer-aro-wrapper/pkg/cluster/graph"
+	"github.com/openshift/installer-aro-wrapper/pkg/installer/dnsmasq"
 )
 
 const (
@@ -59,10 +60,16 @@ func (m *manager) applyInstallConfigCustomisations(installConfig *installconfig.
 		APIIntIP:  m.oc.Properties.APIServerProfile.IntIP,
 		IngressIP: m.oc.Properties.IngressProfiles[0].IP,
 	}
+	localdnsConfig := dnsmasq.DNSConfig{
+		APIIntIP:  m.oc.Properties.APIServerProfile.IntIP,
+		IngressIP: m.oc.Properties.IngressProfiles[0].IP,
+	}
 
 	if m.oc.Properties.NetworkProfile.GatewayPrivateEndpointIP != "" {
 		dnsConfig.GatewayPrivateEndpointIP = m.oc.Properties.NetworkProfile.GatewayPrivateEndpointIP
 		dnsConfig.GatewayDomains = m.getGatewayDomains(m.env, m.oc)
+		localdnsConfig.GatewayPrivateEndpointIP = m.oc.Properties.NetworkProfile.GatewayPrivateEndpointIP
+		localdnsConfig.GatewayDomains = m.getGatewayDomains(m.env, m.oc)
 	}
 
 	fileFetcher := &aroFileFetcher{directory: "/"}
@@ -113,6 +120,17 @@ func (m *manager) applyInstallConfigCustomisations(installConfig *installconfig.
 		}
 	}
 
+	bootstrapAsset := g.Get(&bootstrap.Bootstrap{}).(*bootstrap.Bootstrap)
+	err = dnsmasq.CreatednsmasqIgnitionFiles(bootstrapAsset, installConfig, localdnsConfig)
+	if err != nil {
+		return nil, err
+	}
+	data, err := ignition.Marshal(bootstrapAsset.Config)
+	if err != nil {
+		return nil, err
+	}
+	bootstrapAsset.File.Data = data
+	g.Set(bootstrapAsset)
 	return g, nil
 }
 
